@@ -3,8 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LearnCrossword - Coming Soon</title>
+    <title>LearnCrossword - Your AI Crossword Coach</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --ink: #1a1a2e;
+            --paper: #fdfbf7;
+            --accent: #d4af37;
+            --secondary: #8b4513;
+            --grid: #2a2a3e;
+            --success: #2d6a4f;
+            --hint: #ff6b35;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,192 +23,766 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            font-family: 'Bitter', serif;
+            background: var(--paper);
+            color: var(--ink);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(26, 26, 46, 0.02) 49px, rgba(26, 26, 46, 0.02) 50px),
+                repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(26, 26, 46, 0.02) 49px, rgba(26, 26, 46, 0.02) 50px);
+            z-index: -1;
+            animation: gridPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
         }
 
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
             text-align: center;
-            color: white;
-            max-width: 600px;
-        }
-
-        .logo {
-            font-size: 5em;
-            margin-bottom: 20px;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+            padding: 40px 20px;
+            position: relative;
         }
 
         h1 {
-            font-size: 3.5em;
-            margin-bottom: 20px;
+            font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            color: var(--ink);
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
         }
 
         .tagline {
-            font-size: 1.5em;
-            margin-bottom: 40px;
-            opacity: 0.95;
-            line-height: 1.6;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
         }
 
-        .features {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin: 40px 0;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
         }
 
-        .feature {
+        .stat-card {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--ink);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--accent);
+        }
+
+        .stat-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--secondary);
+            letter-spacing: 0.1em;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--ink);
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin: 20px 0;
-            font-size: 1.2em;
+            gap: 8px;
         }
 
-        .feature-icon {
-            font-size: 2em;
+        .streak-icon {
+            color: var(--hint);
+            font-size: 1.5rem;
         }
 
-        .feature-text {
-            text-align: left;
-        }
-
-        .coming-soon {
-            background: white;
-            color: #667eea;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-size: 1.3em;
-            font-weight: 600;
-            display: inline-block;
-            margin-top: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        .email-signup {
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
             margin-top: 40px;
         }
 
-        .email-input {
-            padding: 15px 25px;
-            font-size: 1.1em;
-            border: none;
-            border-radius: 50px;
-            width: 300px;
-            max-width: 100%;
-            margin-right: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .notify-btn {
-            padding: 15px 35px;
-            font-size: 1.1em;
+        .crossword-section {
             background: white;
-            color: #667eea;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border: 3px solid var(--ink);
+        }
+
+        .crossword-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            margin: 20px 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            background: var(--grid);
+            padding: 2px;
+            border-radius: 8px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: white;
             border: none;
-            border-radius: 50px;
-            font-weight: 600;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
+            position: relative;
+            transition: all 0.2s ease;
         }
 
-        .notify-btn:hover {
+        .cell:not(.blocked):hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+
+        .cell.blocked {
+            background: var(--grid);
+            cursor: default;
+        }
+
+        .cell.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 0 3px var(--accent) inset;
+        }
+
+        .cell.correct {
+            background: var(--success);
+            color: white;
+            animation: cellSuccess 0.5s ease;
+        }
+
+        @keyframes cellSuccess {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .cell-number {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 0.6rem;
+            color: var(--secondary);
+        }
+
+        .clues-section {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border: 3px solid var(--ink);
+        }
+
+        .clue-container {
+            margin: 20px 0;
+        }
+
+        .clue-header {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            letter-spacing: 0.1em;
+        }
+
+        .clue-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: var(--paper);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clue-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateX(5px);
+        }
+
+        .clue-item.active {
+            background: var(--accent);
+            color: white;
+            border-left-color: var(--ink);
+        }
+
+        .clue-number {
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .ai-coach {
+            background: linear-gradient(135deg, var(--hint) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 16px;
+            margin-top: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .coach-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-family: 'Space Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+        }
+
+        .coach-icon {
+            font-size: 1.5rem;
+        }
+
+        .coach-content {
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .hint-button {
+            background: white;
+            color: var(--hint);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        .hint-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .hint-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: 2px solid var(--ink);
+            background: var(--accent);
+            color: var(--ink);
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn:hover {
+            background: var(--ink);
+            color: var(--paper);
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
 
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2.5em;
-            }
-            .logo {
-                font-size: 3.5em;
-            }
-            .tagline {
-                font-size: 1.2em;
-            }
-            .email-input {
-                width: 100%;
-                margin-right: 0;
-                margin-bottom: 10px;
-            }
+        .btn-secondary {
+            background: white;
         }
 
-        .footer {
-            margin-top: 60px;
-            opacity: 0.8;
-            font-size: 0.9em;
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--accent));
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-family: 'Space Mono', monospace;
+            color: var(--secondary);
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 4px solid var(--success);
+            z-index: 1000;
+            text-align: center;
+            animation: celebPop 0.5s ease;
+        }
+
+        @keyframes celebPop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .celebration h2 {
+            font-size: 2.5rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">🎯</div>
-        <h1>LearnCrossword</h1>
-        <p class="tagline">Master cryptic crosswords with AI coaching. Build your solving muscles, one clue at a time.</p>
+        <header>
+            <h1>LearnCrossword</h1>
+            <p class="tagline">Master Cryptic Crosswords with AI</p>
+        </header>
 
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">🤖</div>
-                <div class="feature-text">
-                    <strong>AI Coach</strong><br>
-                    Personalized hints that teach you how to think
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-label">Current Streak</div>
+                <div class="stat-value">
+                    <span class="streak-icon">🔥</span>
+                    <span id="streak">0</span>
                 </div>
             </div>
-            <div class="feature">
-                <div class="feature-icon">🔥</div>
-                <div class="feature-text">
-                    <strong>Daily Streaks</strong><br>
-                    Build the habit with gamified progress tracking
-                </div>
+            <div class="stat-card">
+                <div class="stat-label">Puzzles Solved</div>
+                <div class="stat-value" id="puzzlesSolved">0</div>
             </div>
-            <div class="feature">
-                <div class="feature-icon">🧠</div>
-                <div class="feature-text">
-                    <strong>Mental Fitness</strong><br>
-                    Train your brain like Duolingo trains languages
-                </div>
+            <div class="stat-card">
+                <div class="stat-label">Accuracy</div>
+                <div class="stat-value" id="accuracy">100%</div>
             </div>
         </div>
 
-        <div class="coming-soon">🚀 Launching Soon</div>
-
-        <div class="email-signup">
-            <input type="email" class="email-input" placeholder="Enter your email" id="emailInput">
-            <button class="notify-btn" onclick="notify()">Notify Me</button>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
         </div>
 
-        <div class="footer">
-            learncrossword.in © 2026
+        <div class="main-content">
+            <div class="crossword-section">
+                <h2>Today's Puzzle</h2>
+                <div class="crossword-grid" id="grid"></div>
+                <div class="controls">
+                    <button class="btn" onclick="checkAnswers()">Check Answers</button>
+                    <button class="btn btn-secondary" onclick="clearGrid()">Clear Grid</button>
+                </div>
+            </div>
+
+            <div class="clues-section">
+                <div class="clue-container">
+                    <div class="clue-header">Across</div>
+                    <div id="acrossClues"></div>
+                </div>
+                <div class="clue-container">
+                    <div class="clue-header">Down</div>
+                    <div id="downClues"></div>
+                </div>
+
+                <div class="ai-coach" id="aiCoach">
+                    <div class="coach-header">
+                        <span class="coach-icon">🤖</span>
+                        <span>AI Coach</span>
+                    </div>
+                    <div class="coach-content" id="coachMessage">
+                        Welcome! Select a clue to get started. I'll help you understand cryptic crossword techniques.
+                    </div>
+                    <button class="hint-button" id="hintButton" onclick="getAIHint()">Get AI Hint</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        function notify() {
-            const email = document.getElementById('emailInput').value;
-            if (email && email.includes('@')) {
-                alert('🎉 Thanks! We\'ll notify you when we launch!');
-                document.getElementById('emailInput').value = '';
-            } else {
-                alert('Please enter a valid email address');
+        // Simple beginner puzzle
+        const puzzleData = {
+            grid: [
+                ['L', 'I', 'M', 'I', 'T'],
+                ['I', 'B', 'B', 'B', 'O'],
+                ['G', 'R', 'I', 'L', 'L'],
+                ['H', 'B', 'B', 'B', 'Y'],
+                ['T', 'I', 'G', 'E', 'R']
+            ],
+            blocked: [
+                [1, 1], [1, 2], [1, 3],
+                [3, 1], [3, 2], [3, 3]
+            ],
+            clues: {
+                across: [
+                    { number: 1, clue: "Boundary or restriction (5)", answer: "LIMIT", row: 0, col: 0 },
+                    { number: 3, clue: "Cooking apparatus with bars (5)", answer: "GRILL", row: 2, col: 0 },
+                    { number: 5, clue: "Striped big cat (5)", answer: "TIGER", row: 4, col: 0 }
+                ],
+                down: [
+                    { number: 1, clue: "Not heavy (5)", answer: "LIGHT", row: 0, col: 0 },
+                    { number: 2, clue: "Frozen water (5)", answer: "ICICLE", row: 0, col: 1 }, // Simplified
+                    { number: 4, clue: "Laugh sound (5)", answer: "LOLLY", row: 2, col: 3 } // Simplified
+                ]
+            }
+        };
+
+        let currentCell = null;
+        let currentClue = null;
+        let stats = {
+            streak: parseInt(localStorage.getItem('streak') || '0'),
+            puzzlesSolved: parseInt(localStorage.getItem('puzzlesSolved') || '0'),
+            totalAttempts: parseInt(localStorage.getItem('totalAttempts') || '0'),
+            correctAttempts: parseInt(localStorage.getItem('correctAttempts') || '0')
+        };
+
+        // Initialize grid
+        function initGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            puzzleData.grid.forEach((row, r) => {
+                row.forEach((cell, c) => {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'cell';
+                    
+                    if (puzzleData.blocked.some(([br, bc]) => br === r && bc === c)) {
+                        cellDiv.className += ' blocked';
+                    } else {
+                        cellDiv.contentEditable = true;
+                        cellDiv.dataset.row = r;
+                        cellDiv.dataset.col = c;
+                        
+                        // Add cell number
+                        const clueNum = findClueNumber(r, c);
+                        if (clueNum) {
+                            const numSpan = document.createElement('span');
+                            numSpan.className = 'cell-number';
+                            numSpan.textContent = clueNum;
+                            cellDiv.appendChild(numSpan);
+                        }
+                        
+                        cellDiv.addEventListener('click', () => selectCell(cellDiv));
+                        cellDiv.addEventListener('input', (e) => handleInput(e));
+                        cellDiv.addEventListener('keydown', (e) => handleKeyPress(e));
+                    }
+                    
+                    grid.appendChild(cellDiv);
+                });
+            });
+        }
+
+        function findClueNumber(r, c) {
+            for (let clue of [...puzzleData.clues.across, ...puzzleData.clues.down]) {
+                if (clue.row === r && clue.col === c) {
+                    return clue.number;
+                }
+            }
+            return null;
+        }
+
+        function selectCell(cell) {
+            if (currentCell) {
+                currentCell.classList.remove('active');
+            }
+            currentCell = cell;
+            cell.classList.add('active');
+            cell.focus();
+        }
+
+        function handleInput(e) {
+            const cell = e.target;
+            const text = cell.textContent.replace(/[^A-Za-z]/g, '').toUpperCase();
+            cell.textContent = text.slice(-1); // Keep only last character
+            
+            if (text.length > 0) {
+                moveToNextCell(cell);
+            }
+            
+            updateProgress();
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Backspace' && e.target.textContent === '') {
+                moveToPrevCell(e.target);
+            } else if (e.key === 'ArrowRight') {
+                moveToNextCell(e.target);
+                e.preventDefault();
+            } else if (e.key === 'ArrowLeft') {
+                moveToPrevCell(e.target);
+                e.preventDefault();
             }
         }
+
+        function moveToNextCell(cell) {
+            const cells = Array.from(document.querySelectorAll('.cell:not(.blocked)'));
+            const index = cells.indexOf(cell);
+            if (index < cells.length - 1) {
+                selectCell(cells[index + 1]);
+            }
+        }
+
+        function moveToPrevCell(cell) {
+            const cells = Array.from(document.querySelectorAll('.cell:not(.blocked)'));
+            const index = cells.indexOf(cell);
+            if (index > 0) {
+                selectCell(cells[index - 1]);
+            }
+        }
+
+        function initClues() {
+            const acrossDiv = document.getElementById('acrossClues');
+            const downDiv = document.getElementById('downClues');
+            
+            puzzleData.clues.across.forEach(clue => {
+                const clueDiv = document.createElement('div');
+                clueDiv.className = 'clue-item';
+                clueDiv.innerHTML = `<span class="clue-number">${clue.number}.</span>${clue.clue}`;
+                clueDiv.onclick = () => selectClue(clue, clueDiv);
+                acrossDiv.appendChild(clueDiv);
+            });
+            
+            puzzleData.clues.down.forEach(clue => {
+                const clueDiv = document.createElement('div');
+                clueDiv.className = 'clue-item';
+                clueDiv.innerHTML = `<span class="clue-number">${clue.number}.</span>${clue.clue}`;
+                clueDiv.onclick = () => selectClue(clue, clueDiv);
+                downDiv.appendChild(clueDiv);
+            });
+        }
+
+        function selectClue(clue, clueDiv) {
+            document.querySelectorAll('.clue-item').forEach(c => c.classList.remove('active'));
+            clueDiv.classList.add('active');
+            currentClue = clue;
+            
+            document.getElementById('coachMessage').textContent = `Working on: "${clue.clue}". This is a ${clue.answer.length}-letter word. Think about wordplay and definitions in cryptic clues!`;
+        }
+
+        async function getAIHint() {
+            if (!currentClue) {
+                document.getElementById('coachMessage').textContent = 'Please select a clue first!';
+                return;
+            }
+            
+            const button = document.getElementById('hintButton');
+            const coachMessage = document.getElementById('coachMessage');
+            
+            button.disabled = true;
+            button.textContent = 'Thinking...';
+            coachMessage.innerHTML = '<div class="loading">AI Coach is analyzing the clue</div>';
+            
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1000,
+                        messages: [{
+                            role: 'user',
+                            content: `You are a cryptic crossword coach. The clue is: "${currentClue.clue}". The answer is ${currentClue.answer.length} letters. Give a helpful hint that teaches crossword-solving technique without giving away the answer. Explain one aspect of how cryptic clues work. Keep it under 100 words and encouraging.`
+                        }]
+                    })
+                });
+                
+                const data = await response.json();
+                const hint = data.content[0].text;
+                
+                coachMessage.textContent = hint;
+            } catch (error) {
+                coachMessage.textContent = 'Hint: Break the clue into parts. Look for the definition (usually at start or end) and wordplay in the middle. For example, in "Boundary or restriction (5)", "boundary" is the definition, and you need a 5-letter word meaning restriction.';
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Get Another Hint';
+        }
+
+        function checkAnswers() {
+            const cells = document.querySelectorAll('.cell:not(.blocked)');
+            let correct = 0;
+            let total = 0;
+            
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                const userAnswer = cell.textContent.replace(/[^A-Za-z]/g, '').toUpperCase();
+                const correctAnswer = puzzleData.grid[r][c];
+                
+                total++;
+                
+                if (userAnswer === correctAnswer) {
+                    cell.classList.add('correct');
+                    correct++;
+                } else {
+                    cell.classList.remove('correct');
+                }
+            });
+            
+            stats.totalAttempts++;
+            if (correct === total) {
+                stats.correctAttempts++;
+                stats.puzzlesSolved++;
+                stats.streak++;
+                showCelebration();
+            }
+            
+            saveStats();
+            updateStats();
+            updateProgress();
+        }
+
+        function clearGrid() {
+            document.querySelectorAll('.cell:not(.blocked)').forEach(cell => {
+                const numSpan = cell.querySelector('.cell-number');
+                cell.textContent = '';
+                if (numSpan) cell.appendChild(numSpan);
+                cell.classList.remove('correct');
+            });
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const cells = document.querySelectorAll('.cell:not(.blocked)');
+            const filled = Array.from(cells).filter(cell => {
+                const text = cell.textContent.replace(/[^A-Za-z]/g, '');
+                return text.length > 0;
+            }).length;
+            
+            const progress = (filled / cells.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function updateStats() {
+            document.getElementById('streak').textContent = stats.streak;
+            document.getElementById('puzzlesSolved').textContent = stats.puzzlesSolved;
+            
+            const accuracy = stats.totalAttempts > 0 
+                ? Math.round((stats.correctAttempts / stats.totalAttempts) * 100)
+                : 100;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+
+        function saveStats() {
+            localStorage.setItem('streak', stats.streak);
+            localStorage.setItem('puzzlesSolved', stats.puzzlesSolved);
+            localStorage.setItem('totalAttempts', stats.totalAttempts);
+            localStorage.setItem('correctAttempts', stats.correctAttempts);
+        }
+
+        function showCelebration() {
+            const overlay = document.createElement('div');
+            overlay.className = 'overlay';
+            
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            celebration.innerHTML = `
+                <h2>🎉 Puzzle Complete!</h2>
+                <p style="font-size: 1.2rem; margin: 20px 0;">You've solved the puzzle!</p>
+                <p style="color: var(--secondary);">Streak: ${stats.streak} days 🔥</p>
+                <button class="btn" onclick="this.parentElement.remove(); document.querySelector('.overlay').remove();" style="margin-top: 20px;">Continue</button>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(celebration);
+            
+            overlay.onclick = () => {
+                overlay.remove();
+                celebration.remove();
+            };
+        }
+
+        // Initialize
+        initGrid();
+        initClues();
+        updateStats();
     </script>
 </body>
 </html>

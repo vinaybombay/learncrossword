@@ -1,50 +1,203 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Learn Crossword – Coming Soon</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnCrossword - Coming Soon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0A2A43;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
-    .box {
-      max-width: 600px;
-      padding: 40px;
-    }
+        .container {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+        }
 
-    h1 {
-      color: #F27A21;
-    }
+        .logo {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
 
-    p {
-      font-size: 18px;
-      line-height: 1.5;
-    }
-  </style>
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .tagline {
+            font-size: 1.5em;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        .features {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+
+        .feature-icon {
+            font-size: 2em;
+        }
+
+        .feature-text {
+            text-align: left;
+        }
+
+        .coming-soon {
+            background: white;
+            color: #667eea;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.3em;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .email-signup {
+            margin-top: 40px;
+        }
+
+        .email-input {
+            padding: 15px 25px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            width: 300px;
+            max-width: 100%;
+            margin-right: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .notify-btn {
+            padding: 15px 35px;
+            font-size: 1.1em;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .notify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.5em;
+            }
+            .logo {
+                font-size: 3.5em;
+            }
+            .tagline {
+                font-size: 1.2em;
+            }
+            .email-input {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+
+        .footer {
+            margin-top: 60px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
-
 <body>
-  <div class="box">
-    <h1>LearnCrossword.in</h1>
-    <p><strong>AI-powered coaching for cryptic crosswords.</strong></p>
-    <p>
-      Learn how to decode clues step-by-step.<br>
-      Practice with interactive puzzles.<br>
-      Think like an expert solver.
-    </p>
-    <p>🚀 Coming Soon</p>
-  </div>
+    <div class="container">
+        <div class="logo">🎯</div>
+        <h1>LearnCrossword</h1>
+        <p class="tagline">Master cryptic crosswords with AI coaching. Build your solving muscles, one clue at a time.</p>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-text">
+                    <strong>AI Coach</strong><br>
+                    Personalized hints that teach you how to think
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔥</div>
+                <div class="feature-text">
+                    <strong>Daily Streaks</strong><br>
+                    Build the habit with gamified progress tracking
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🧠</div>
+                <div class="feature-text">
+                    <strong>Mental Fitness</strong><br>
+                    Train your brain like Duolingo trains languages
+                </div>
+            </div>
+        </div>
+
+        <div class="coming-soon">🚀 Launching Soon</div>
+
+        <div class="email-signup">
+            <input type="email" class="email-input" placeholder="Enter your email" id="emailInput">
+            <button class="notify-btn" onclick="notify()">Notify Me</button>
+        </div>
+
+        <div class="footer">
+            learncrossword.in © 2026
+        </div>
+    </div>
+
+    <script>
+        function notify() {
+            const email = document.getElementById('emailInput').value;
+            if (email && email.includes('@')) {
+                alert('🎉 Thanks! We\'ll notify you when we launch!');
+                document.getElementById('emailInput').value = '';
+            } else {
+                alert('Please enter a valid email address');
+            }
+        }
+    </script>
 </body>
 </html>
-

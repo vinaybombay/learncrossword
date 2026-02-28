@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Minimal Design Color Scheme */
+:root {
+  --color-primary: #4f46e5; /* Indigo */
+  --color-secondary: #64748b; /* Slate */
+  --color-accent: #10b981; /* Emerald */
+  --color-warning: #f59e0b; /* Amber */
+  --color-neutral: #e2e8f0; /* Light Gray */
+}

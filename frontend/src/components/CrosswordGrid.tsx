@@ -12,12 +12,12 @@ interface CrosswordGridProps {
   submitted: boolean;
 }
 
-interface CellPos {
+export interface CellPos {
   row: number;
   col: number;
 }
 
-interface ClueStart {
+export interface ClueStart {
   clueNumber: number;
   direction: 'across' | 'down';
   row: number;
@@ -28,7 +28,7 @@ interface ClueStart {
 // Derive the starting cell for each clue by scanning gridData.
 // For 'across': scan each row for a run of non-dot cells matching the answer length.
 // For 'down':   scan each column for a run of non-dot cells matching the answer length.
-function deriveClueStarts(gridData: string[], clues: Clue[]): ClueStart[] {
+export function deriveClueStarts(gridData: string[], clues: Clue[]): ClueStart[] {
   const size = gridData.length;
   const isOpen = (r: number, c: number) => r >= 0 && r < size && c >= 0 && c < size && gridData[r][c] !== '.';
 
@@ -67,7 +67,7 @@ function deriveClueStarts(gridData: string[], clues: Clue[]): ClueStart[] {
 }
 
 // Return all cells covered by a clue given its start position.
-function clueCells(start: ClueStart): CellPos[] {
+export function clueCells(start: ClueStart): CellPos[] {
   return Array.from({ length: start.length }, (_, i) =>
     start.direction === 'across'
       ? { row: start.row, col: start.col + i }

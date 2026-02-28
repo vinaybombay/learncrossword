@@ -78,7 +78,9 @@ export async function submitCrossword(req: AuthRequest, res: Response) {
       });
     }
 
-    progress.answers = new Map(Object.entries(answers));
+    progress.answers = new Map(
+      Object.entries(answers).map(([k, v]) => [k, v as string])
+    );
     progress.completed = isCompleted;
     progress.pointsEarned = pointsEarned;
     if (isCompleted) progress.completedAt = new Date();

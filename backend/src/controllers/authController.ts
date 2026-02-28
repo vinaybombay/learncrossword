@@ -29,7 +29,7 @@ export async function register(req: any, res: Response) {
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET || 'secret',
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      { expiresIn: (process.env.JWT_EXPIRE || '7d') as any }
     );
 
     res.status(201).json({
@@ -63,7 +63,7 @@ export async function login(req: any, res: Response) {
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET || 'secret',
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      { expiresIn: (process.env.JWT_EXPIRE || '7d') as any }
     );
 
     res.json({

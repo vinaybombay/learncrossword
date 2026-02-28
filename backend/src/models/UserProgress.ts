@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IUserProgress extends Document {
   userId: mongoose.Types.ObjectId;
   crosswordId: mongoose.Types.ObjectId;
-  answers: Map<number, string>; // clueNumber -> answer
+  answers: Map<string, string>; // clueNumber (as string) -> answer
   hintsUsed: number;
   pointsEarned: number;
   completed: boolean;

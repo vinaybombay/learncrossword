@@ -1,5 +1,5 @@
 import client from './api';
-import { Crossword, UserProgress } from '../types';
+import { Crossword } from '../types';
 
 export const crosswordService = {
   getCrosswords: async (difficulty?: string, skip = 0, limit = 10) => {

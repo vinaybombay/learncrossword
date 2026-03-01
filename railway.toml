@@ -1,5 +1,6 @@
-[settings]
-rootDirectory = "backend"
+# Railway deployment config for the backend service.
+# IMPORTANT: In the Railway dashboard → Settings → Root Directory = "backend"
+# This file is read AFTER Railway resolves the root directory.
 
 [build]
 builder = "NIXPACKS"

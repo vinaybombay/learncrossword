@@ -137,6 +137,97 @@ npm run dev
 npm run build
 ```
 
+### Running Tests
+```bash
+# Backend (Jest + Supertest, uses MongoMemoryServer — no real DB needed)
+cd backend && npm test
+
+# Frontend (Vitest + Testing Library)
+cd frontend && npm test -- --run
+```
+
+---
+
+## Deployment
+
+The app is deployed as three separate services:
+
+| Service | Platform | URL |
+|---------|----------|-----|
+| Frontend | Vercel | `https://REPLACE_WITH_VERCEL_URL` |
+| Backend | Railway | `https://REPLACE_WITH_RAILWAY_URL` |
+| Database | MongoDB Atlas | M0 free cluster |
+
+> **After deploying**, replace the placeholder URLs above with your actual URLs.
+
+---
+
+### 1 — MongoDB Atlas (database)
+
+1. Go to [atlas.mongodb.com](https://atlas.mongodb.com) → create a free account
+2. Create a new **M0 (free)** cluster in your preferred region
+3. **Database Access** → Add a new user with a strong password (note the credentials)
+4. **Network Access** → Add IP `0.0.0.0/0` *(Railway uses dynamic IPs)*
+5. Click **Connect** on your cluster → **Compass / Drivers** → copy the connection string
+   It looks like: `mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/learncrosswords`
+6. Keep this string — you'll paste it into Railway next
+
+---
+
+### 2 — Railway (backend)
+
+1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
+2. Select the `learncrossword` repository
+3. When prompted for a **root directory**, set it to `backend`
+4. Railway will detect Node.js via `railway.toml` and run `npm install && npm run build`
+5. Under **Variables**, add:
+
+| Variable | Value |
+|----------|-------|
+| `NODE_ENV` | `production` |
+| `MONGODB_URI` | Your Atlas connection string |
+| `JWT_SECRET` | A strong random string (32+ chars) |
+| `JWT_EXPIRE` | `7d` |
+| `FRONTEND_URL` | Your Vercel URL *(add after step 3 below, then redeploy)* |
+
+6. After the first deploy, copy your Railway URL (e.g. `https://learncrossword-production.up.railway.app`)
+7. Verify: `curl https://<railway-url>/api/health` → should return `{"status":"OK",...}`
+
+#### Seed the database (run once after first deploy)
+
+```bash
+# From your local machine, with MONGODB_URI exported:
+export MONGODB_URI="mongodb+srv://..."
+cd backend
+npm run build
+node dist/seeds/seedDatabase.js
+```
+
+---
+
+### 3 — Vercel (frontend)
+
+1. Go to [vercel.com](https://vercel.com) → **New Project** → Import `learncrossword` from GitHub
+2. Set **Root Directory** to `frontend`
+3. Under **Environment Variables**, add:
+
+| Variable | Value |
+|----------|-------|
+| `VITE_API_URL` | `https://<your-railway-url>/api` |
+
+4. Click **Deploy** → copy your Vercel URL (e.g. `https://learncrossword.vercel.app`)
+5. Go back to Railway → update `FRONTEND_URL` = your Vercel URL → trigger a redeploy
+
+---
+
+### CI/CD — GitHub Actions
+
+Every push to `main` automatically runs:
+- **Backend**: `npm ci && npm test` (Jest, ~3s)
+- **Frontend**: `npm ci && npm run build && npm test -- --run` (Vite build + Vitest, ~10s)
+
+Check the **Actions** tab in GitHub to see live build status.
+
 ## Design Colors
 
 The app uses a minimal color palette:

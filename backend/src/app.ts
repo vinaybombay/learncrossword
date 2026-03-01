@@ -16,6 +16,9 @@ import { requestLogger } from './middleware/requestLogger';
 
 const app: Express = express();
 
+// Trust Railway/Vercel reverse proxy — needed for correct IP logging and HTTPS detection
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',

@@ -26,11 +26,10 @@ export interface ClueStart {
 }
 
 // Derive the starting cell for each clue by scanning gridData.
-// For 'across': scan each row for a run of non-dot cells matching the answer length.
-// For 'down':   scan each column for a run of non-dot cells matching the answer length.
 export function deriveClueStarts(gridData: string[], clues: Clue[]): ClueStart[] {
   const size = gridData.length;
-  const isOpen = (r: number, c: number) => r >= 0 && r < size && c >= 0 && c < size && gridData[r][c] !== '.';
+  const isOpen = (r: number, c: number) =>
+    r >= 0 && r < size && c >= 0 && c < size && gridData[r][c] !== '.';
 
   const starts: ClueStart[] = [];
 
@@ -38,7 +37,6 @@ export function deriveClueStarts(gridData: string[], clues: Clue[]): ClueStart[]
     if (clue.direction === 'across') {
       outer: for (let r = 0; r < size; r++) {
         for (let c = 0; c <= size - clue.length; c++) {
-          // Check the run [c, c+length) is all open, and the cell before/after is closed/edge
           const runOk = Array.from({ length: clue.length }, (_, i) => isOpen(r, c + i)).every(Boolean);
           const leftClosed = c === 0 || !isOpen(r, c - 1);
           const rightClosed = c + clue.length === size || !isOpen(r, c + clue.length);
@@ -66,7 +64,6 @@ export function deriveClueStarts(gridData: string[], clues: Clue[]): ClueStart[]
   return starts;
 }
 
-// Return all cells covered by a clue given its start position.
 export function clueCells(start: ClueStart): CellPos[] {
   return Array.from({ length: start.length }, (_, i) =>
     start.direction === 'across'
@@ -112,13 +109,11 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
   const isOpen = (r: number, c: number) =>
     r >= 0 && r < gridSize && c >= 0 && c < gridSize && gridData[r]?.[c] !== '.';
 
-  // Find the clue start for the given cursor + direction
   const findClueForCell = (r: number, c: number, dir: 'across' | 'down'): ClueStart | null => {
     const covers = coverMap.get(`${r},${c}`) ?? [];
     return covers.find((cs) => cs.direction === dir) ?? null;
   };
 
-  // Get the letter stored in answers for a given cell
   const getLetterAt = (r: number, c: number): string => {
     const covers = coverMap.get(`${r},${c}`) ?? [];
     for (const cs of covers) {
@@ -132,8 +127,14 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
     return '';
   };
 
-  // Get correct letter from gridData for submitted validation
   const getCorrectLetter = (r: number, c: number): string => gridData[r]?.[c] ?? '.';
+
+  // Get the clue number label for a cell (smallest clue number at that start position)
+  const getCellNumber = (r: number, c: number): number | undefined => {
+    const starts = startMap.get(`${r},${c}`);
+    if (!starts || starts.length === 0) return undefined;
+    return Math.min(...starts.map((s) => s.clueNumber));
+  };
 
   const handleCellClick = (r: number, c: number) => {
     if (!isOpen(r, c)) return;
@@ -142,15 +143,27 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
     let newDir = direction;
 
     if (isSameCell) {
-      // Toggle direction on repeated click
+      // Toggle direction on repeated click of same cell
       const covers = coverMap.get(`${r},${c}`) ?? [];
-      const hasBoth = covers.some((cs) => cs.direction === 'across') && covers.some((cs) => cs.direction === 'down');
-      if (hasBoth) {
+      const hasAcross = covers.some((cs) => cs.direction === 'across');
+      const hasDown = covers.some((cs) => cs.direction === 'down');
+      if (hasAcross && hasDown) {
         newDir = direction === 'across' ? 'down' : 'across';
         setDirection(newDir);
       }
     } else {
       setCursor({ row: r, col: c });
+      // When clicking new cell, prefer to keep current direction if available
+      const covers = coverMap.get(`${r},${c}`) ?? [];
+      const hasCurrentDir = covers.some((cs) => cs.direction === direction);
+      if (!hasCurrentDir) {
+        // Switch to whichever direction is available
+        const available = covers[0]?.direction;
+        if (available) {
+          newDir = available;
+          setDirection(available);
+        }
+      }
     }
 
     const cs = findClueForCell(r, c, newDir) ?? findClueForCell(r, c, newDir === 'across' ? 'down' : 'across');
@@ -164,11 +177,10 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
     gridRef.current?.focus();
   };
 
-  // Sync external selectedClue → internal direction
+  // Sync external selectedClue → internal direction + cursor
   useEffect(() => {
     if (selectedClue) {
       setDirection(selectedClue.direction);
-      // Move cursor to start of the selected clue
       const cs = clueStarts.find(
         (s) => s.clueNumber === selectedClue.number && s.direction === selectedClue.direction
       );
@@ -182,33 +194,96 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
 
     if (e.key === 'ArrowRight') {
       e.preventDefault();
-      setDirection('across');
-      for (let dc = 1; dc < gridSize; dc++) {
-        if (isOpen(row, col + dc)) { setCursor({ row, col: col + dc }); break; }
+      if (direction !== 'across') {
+        setDirection('across');
+        const cs = findClueForCell(row, col, 'across');
+        if (cs) onClueSelect(cs.clueNumber, 'across');
+      } else {
+        for (let dc = 1; dc < gridSize; dc++) {
+          if (isOpen(row, col + dc)) {
+            const newCursor = { row, col: col + dc };
+            setCursor(newCursor);
+            const cs = findClueForCell(row, col + dc, 'across');
+            if (cs) onClueSelect(cs.clueNumber, 'across');
+            break;
+          }
+        }
       }
       return;
     }
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      setDirection('across');
-      for (let dc = 1; dc < gridSize; dc++) {
-        if (isOpen(row, col - dc)) { setCursor({ row, col: col - dc }); break; }
+      if (direction !== 'across') {
+        setDirection('across');
+        const cs = findClueForCell(row, col, 'across');
+        if (cs) onClueSelect(cs.clueNumber, 'across');
+      } else {
+        for (let dc = 1; dc < gridSize; dc++) {
+          if (isOpen(row, col - dc)) {
+            setCursor({ row, col: col - dc });
+            const cs = findClueForCell(row, col - dc, 'across');
+            if (cs) onClueSelect(cs.clueNumber, 'across');
+            break;
+          }
+        }
       }
       return;
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setDirection('down');
-      for (let dr = 1; dr < gridSize; dr++) {
-        if (isOpen(row + dr, col)) { setCursor({ row: row + dr, col }); break; }
+      if (direction !== 'down') {
+        setDirection('down');
+        const cs = findClueForCell(row, col, 'down');
+        if (cs) onClueSelect(cs.clueNumber, 'down');
+      } else {
+        for (let dr = 1; dr < gridSize; dr++) {
+          if (isOpen(row + dr, col)) {
+            setCursor({ row: row + dr, col });
+            const cs = findClueForCell(row + dr, col, 'down');
+            if (cs) onClueSelect(cs.clueNumber, 'down');
+            break;
+          }
+        }
       }
       return;
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setDirection('down');
-      for (let dr = 1; dr < gridSize; dr++) {
-        if (isOpen(row - dr, col)) { setCursor({ row: row - dr, col }); break; }
+      if (direction !== 'down') {
+        setDirection('down');
+        const cs = findClueForCell(row, col, 'down');
+        if (cs) onClueSelect(cs.clueNumber, 'down');
+      } else {
+        for (let dr = 1; dr < gridSize; dr++) {
+          if (isOpen(row - dr, col)) {
+            setCursor({ row: row - dr, col });
+            const cs = findClueForCell(row - dr, col, 'down');
+            if (cs) onClueSelect(cs.clueNumber, 'down');
+            break;
+          }
+        }
+      }
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      // Tab cycles through clues
+      const sortedClues = [...clueStarts].sort((a, b) => {
+        if (a.direction !== b.direction) return a.direction === 'across' ? -1 : 1;
+        return a.clueNumber - b.clueNumber;
+      });
+      const currentIdx = sortedClues.findIndex(
+        (cs) => cs.clueNumber === selectedClue?.number && cs.direction === selectedClue?.direction
+      );
+      const nextIdx = e.shiftKey
+        ? (currentIdx - 1 + sortedClues.length) % sortedClues.length
+        : (currentIdx + 1) % sortedClues.length;
+      const next = sortedClues[nextIdx];
+      if (next) {
+        setDirection(next.direction);
+        setCursor({ row: next.row, col: next.col });
+        onClueSelect(next.clueNumber, next.direction);
       }
       return;
     }
@@ -219,9 +294,15 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
       if (cs) {
         const cells = clueCells(cs);
         const idx = cells.findIndex((p) => p.row === row && p.col === col);
-        onCellChange(cs.clueNumber, cs.direction, idx, ' ');
-        // Move cursor back
-        if (idx > 0) setCursor(cells[idx - 1]);
+        const currentLetter = getLetterAt(row, col);
+        if (currentLetter && currentLetter !== ' ') {
+          onCellChange(cs.clueNumber, cs.direction, idx, ' ');
+        } else if (idx > 0) {
+          // Move back and clear
+          const prevCell = cells[idx - 1];
+          setCursor(prevCell);
+          onCellChange(cs.clueNumber, cs.direction, idx - 1, ' ');
+        }
       }
       return;
     }
@@ -234,7 +315,7 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
         const cells = clueCells(cs);
         const idx = cells.findIndex((p) => p.row === row && p.col === col);
         onCellChange(cs.clueNumber, cs.direction, idx, letter);
-        // Advance cursor
+        // Advance cursor to next cell in word
         if (idx < cells.length - 1) {
           setCursor(cells[idx + 1]);
         }
@@ -242,36 +323,94 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
     }
   };
 
-  // Determine cell background class
-  const getCellClass = (r: number, c: number): string => {
-    if (!isOpen(r, c)) return 'bg-slate-900';
-
-    const isCursor = cursor?.row === r && cursor?.col === c;
-    const isHighlighted = (() => {
-      if (!selectedClue) return false;
-      const cs = clueStarts.find(
-        (s) => s.clueNumber === selectedClue.number && s.direction === selectedClue.direction
-      );
-      if (!cs) return false;
-      return clueCells(cs).some((p) => p.row === r && p.col === c);
-    })();
-
-    if (submitted) {
-      const letter = getLetterAt(r, c);
-      const correct = getCorrectLetter(r, c);
-      if (letter && letter !== ' ') {
-        if (letter === correct) return 'bg-emerald-100 border border-emerald-400';
-        return 'bg-red-100 border border-red-400';
-      }
-    }
-
-    if (isCursor) return 'bg-indigo-300 border border-indigo-500';
-    if (isHighlighted) return 'bg-indigo-100 border border-indigo-300';
-    return 'bg-white border border-slate-300';
+  // Determine if a cell is part of the currently selected clue's word
+  const isInSelectedWord = (r: number, c: number): boolean => {
+    if (!selectedClue) return false;
+    const cs = clueStarts.find(
+      (s) => s.clueNumber === selectedClue.number && s.direction === selectedClue.direction
+    );
+    if (!cs) return false;
+    return clueCells(cs).some((p) => p.row === r && p.col === c);
   };
 
-  // Cell size adapts to grid size
-  const cellPx = gridSize <= 7 ? 48 : gridSize <= 9 ? 40 : 32;
+  // Cell size adapts to grid size — Guardian uses ~31px for 15x15
+  const cellPx = gridSize <= 7 ? 52 : gridSize <= 9 ? 44 : gridSize <= 13 ? 36 : 31;
+  const numFontSize = Math.max(7, Math.floor(cellPx * 0.28));
+  const letterFontSize = Math.max(13, Math.floor(cellPx * 0.55));
+
+  const renderCell = (r: number, c: number) => {
+    const open = isOpen(r, c);
+    const letter = open ? getLetterAt(r, c) : '';
+    const cellNumber = open ? getCellNumber(r, c) : undefined;
+    const isCursor = cursor?.row === r && cursor?.col === c;
+    const inWord = isInSelectedWord(r, c);
+
+    let bgColor = '';
+    let textColor = 'text-slate-900';
+    let borderStyle = '';
+
+    if (!open) {
+      // Black cell — Guardian style solid black
+      bgColor = 'bg-slate-900';
+      borderStyle = '';
+    } else if (submitted) {
+      const typedLetter = letter;
+      const correct = getCorrectLetter(r, c);
+      if (typedLetter && typedLetter !== ' ') {
+        if (typedLetter === correct) {
+          bgColor = isCursor ? 'bg-emerald-300' : inWord ? 'bg-emerald-100' : 'bg-emerald-50';
+          textColor = 'text-emerald-800';
+        } else {
+          bgColor = isCursor ? 'bg-red-300' : inWord ? 'bg-red-100' : 'bg-red-50';
+          textColor = 'text-red-800';
+        }
+      } else {
+        bgColor = isCursor ? 'bg-yellow-200' : inWord ? 'bg-blue-100' : 'bg-white';
+      }
+      borderStyle = 'border border-slate-400';
+    } else {
+      if (isCursor) {
+        // Active cursor cell — Guardian uses yellow
+        bgColor = 'bg-yellow-300';
+        textColor = 'text-slate-900';
+      } else if (inWord) {
+        // Highlighted word — Guardian uses light blue
+        bgColor = 'bg-[#c7d8e8]';
+        textColor = 'text-slate-900';
+      } else {
+        bgColor = 'bg-white';
+      }
+      borderStyle = 'border border-slate-400';
+    }
+
+    return (
+      <div
+        key={`${r}-${c}`}
+        onClick={() => handleCellClick(r, c)}
+        className={`relative ${bgColor} ${borderStyle} ${open ? 'cursor-pointer' : 'cursor-default'} select-none`}
+        style={{ width: cellPx, height: cellPx }}
+      >
+        {/* Clue number — top-left, small */}
+        {open && cellNumber !== undefined && (
+          <span
+            className="absolute top-0 left-0.5 leading-none font-normal text-slate-800 z-10"
+            style={{ fontSize: numFontSize, lineHeight: `${numFontSize + 2}px`, paddingTop: 1 }}
+          >
+            {cellNumber}
+          </span>
+        )}
+        {/* Letter — centred */}
+        {open && letter && letter !== ' ' && (
+          <span
+            className={`absolute inset-0 flex items-center justify-center font-bold uppercase ${textColor}`}
+            style={{ fontSize: letterFontSize, paddingTop: cellNumber !== undefined ? numFontSize - 2 : 0 }}
+          >
+            {letter}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -281,48 +420,60 @@ const CrosswordGrid: React.FC<CrosswordGridProps> = ({
       className="focus:outline-none select-none"
       aria-label="Crossword grid"
     >
-      <div
-        className="inline-grid gap-px bg-slate-400 border border-slate-400 rounded overflow-hidden mx-auto block"
-        style={{
-          gridTemplateColumns: `repeat(${gridSize}, ${cellPx}px)`,
-          gridTemplateRows: `repeat(${gridSize}, ${cellPx}px)`,
-        }}
-      >
-        {Array.from({ length: gridSize }, (_, r) =>
-          Array.from({ length: gridSize }, (_, c) => {
-            const open = isOpen(r, c);
-            const letter = open ? getLetterAt(r, c) : '';
-            const clueLabel = startMap.get(`${r},${c}`)?.[0]?.clueNumber;
+      {/* Direction indicator */}
+      <div className="flex items-center gap-3 mb-3">
+        <button
+          onClick={() => {
+            setDirection('across');
+            if (cursor) {
+              const cs = findClueForCell(cursor.row, cursor.col, 'across');
+              if (cs) onClueSelect(cs.clueNumber, 'across');
+            }
+          }}
+          className={`px-3 py-1 rounded text-sm font-semibold transition ${
+            direction === 'across'
+              ? 'bg-slate-800 text-white'
+              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+          }`}
+        >
+          → Across
+        </button>
+        <button
+          onClick={() => {
+            setDirection('down');
+            if (cursor) {
+              const cs = findClueForCell(cursor.row, cursor.col, 'down');
+              if (cs) onClueSelect(cs.clueNumber, 'down');
+            }
+          }}
+          className={`px-3 py-1 rounded text-sm font-semibold transition ${
+            direction === 'down'
+              ? 'bg-slate-800 text-white'
+              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+          }`}
+        >
+          ↓ Down
+        </button>
+        <span className="text-xs text-slate-400 ml-2">Click same cell to toggle · Tab to next clue</span>
+      </div>
 
-            return (
-              <div
-                key={`${r}-${c}`}
-                onClick={() => handleCellClick(r, c)}
-                className={`relative flex items-center justify-center ${getCellClass(r, c)} ${
-                  open ? 'cursor-pointer' : 'cursor-default'
-                }`}
-                style={{ width: cellPx, height: cellPx }}
-              >
-                {open && clueLabel !== undefined && (
-                  <span
-                    className="absolute top-0.5 left-0.5 text-slate-600 leading-none font-medium"
-                    style={{ fontSize: Math.max(8, cellPx / 5) }}
-                  >
-                    {clueLabel}
-                  </span>
-                )}
-                {open && letter && letter !== ' ' && (
-                  <span
-                    className="font-bold text-slate-900 uppercase"
-                    style={{ fontSize: Math.max(12, cellPx / 2.8) }}
-                  >
-                    {letter}
-                  </span>
-                )}
-              </div>
-            );
-          })
-        )}
+      {/* Grid — outer border matches Guardian's thick outer border */}
+      <div
+        className="inline-block border-2 border-slate-900"
+        style={{ lineHeight: 0 }}
+      >
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: `repeat(${gridSize}, ${cellPx}px)`,
+            gridTemplateRows: `repeat(${gridSize}, ${cellPx}px)`,
+            gap: 0,
+          }}
+        >
+          {Array.from({ length: gridSize }, (_, r) =>
+            Array.from({ length: gridSize }, (_, c) => renderCell(r, c))
+          )}
+        </div>
       </div>
     </div>
   );

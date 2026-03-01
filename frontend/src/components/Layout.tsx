@@ -28,10 +28,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Navigation */}
             <nav className="hidden md:flex items-center gap-8">
               <Link to="/crosswords" className="text-slate-600 hover:text-slate-900 font-medium transition">
-                Crosswords
+                Library
               </Link>
               <Link to="/leaderboard" className="text-slate-600 hover:text-slate-900 font-medium transition">
                 Leaderboard
+              </Link>
+              <Link
+                to="/upload"
+                className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium transition"
+              >
+                + Your Crossword
               </Link>
             </nav>
 

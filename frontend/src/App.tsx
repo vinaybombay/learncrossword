@@ -9,6 +9,7 @@ import Crosswords from './pages/Crosswords';
 import CrosswordSolver from './pages/CrosswordSolver';
 import Dashboard from './pages/Dashboard';
 import Leaderboard from './pages/Leaderboard';
+import UploadCrossword from './pages/UploadCrossword';
 import { useAuthStore } from './store/authStore';
 import './index.css';
 
@@ -46,6 +47,7 @@ function App() {
               }
             />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/upload" element={<UploadCrossword />} />
           </Routes>
         </Layout>
       </Router>

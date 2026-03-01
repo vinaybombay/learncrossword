@@ -9,7 +9,7 @@ export interface IClue extends Document {
 }
 
 export interface IHint extends Document {
-  clueId: mongoose.Types.ObjectId;
+  clueId: string;
   level: number; // 1, 2, or 3
   content: string;
 }
@@ -31,7 +31,7 @@ export interface ICrossword extends Document {
 
 const hintSchema = new Schema<IHint>({
   clueId: {
-    type: Schema.Types.ObjectId,
+    type: String,
     required: true,
   },
   level: {

@@ -6,7 +6,6 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import DailyPuzzle from './pages/DailyPuzzle';
-import CrosswordSolver from './pages/CrosswordSolver';
 import Dashboard from './pages/Dashboard';
 import Leaderboard from './pages/Leaderboard';
 import UploadCrossword from './pages/UploadCrossword';
@@ -30,14 +29,6 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/crosswords" element={<DailyPuzzle />} />
-            <Route
-              path="/crossword/:id"
-              element={
-                <ProtectedRoute>
-                  <CrosswordSolver />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/dashboard"
               element={

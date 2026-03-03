@@ -8,7 +8,6 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "jest",
-    "seed": "ts-node src/seeds/run.ts",
     "seed:words": "ts-node src/seeds/seedWords.ts",
     "seed:clear": "ts-node src/seeds/clearPuzzles.ts",
     "generate:puzzles": "ts-node src/seeds/generatePuzzles.ts",

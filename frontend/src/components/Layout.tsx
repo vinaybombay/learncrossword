@@ -112,7 +112,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </div>
           </div>
           <div className="border-t border-slate-800 pt-8 text-center text-sm">
-            <p>&copy; 2024 Learn Crosswords. All rights reserved.</p>
+            <p>&copy; 2026 Learn Crosswords. All rights reserved.</p>
           </div>
         </div>
       </footer>

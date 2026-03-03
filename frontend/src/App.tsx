@@ -5,7 +5,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Crosswords from './pages/Crosswords';
+import DailyPuzzle from './pages/DailyPuzzle';
 import CrosswordSolver from './pages/CrosswordSolver';
 import Dashboard from './pages/Dashboard';
 import Leaderboard from './pages/Leaderboard';
@@ -29,7 +29,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/crosswords" element={<Crosswords />} />
+            <Route path="/crosswords" element={<DailyPuzzle />} />
             <Route
               path="/crossword/:id"
               element={

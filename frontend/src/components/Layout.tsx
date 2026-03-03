@@ -28,7 +28,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Navigation */}
             <nav className="hidden md:flex items-center gap-8">
               <Link to="/crosswords" className="text-slate-600 hover:text-slate-900 font-medium transition">
-                Library
+                Daily Puzzle
               </Link>
               <Link to="/leaderboard" className="text-slate-600 hover:text-slate-900 font-medium transition">
                 Leaderboard
@@ -95,7 +95,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div>
               <h4 className="text-white font-semibold mb-4">Quick Links</h4>
               <ul className="text-sm space-y-2">
-                <li><Link to="/crosswords" className="hover:text-white transition">Browse Crosswords</Link></li>
+                <li><Link to="/crosswords" className="hover:text-white transition">Daily Puzzle</Link></li>
                 <li><Link to="/leaderboard" className="hover:text-white transition">Leaderboard</Link></li>
               </ul>
             </div>

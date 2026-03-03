@@ -63,3 +63,47 @@ export interface UserStats {
   totalAttempts: number;
   completionRate: string;
 }
+
+// ── New Puzzle system (cryptic crosswords) ──────────────────────────────────
+
+export type ClueType = 'ANAG' | 'HID' | 'HIDR' | 'ACRO' | 'LAST' | 'ALT' | 'SND' | 'CHAR';
+
+export interface PuzzleClue {
+  number: number;
+  direction: 'across' | 'down';
+  text: string;
+  answer: string;
+  letterCount: string; // e.g. "4" or "3,4"
+  startRow: number;
+  startCol: number;
+  length: number;
+  clueType: ClueType;
+  definitionStart?: boolean;
+  indicatorWord?: string;
+}
+
+export interface PuzzleCell {
+  row: number;
+  col: number;
+  isBlack: boolean;
+  number: number | null;
+  acrossStart: boolean;
+  downStart: boolean;
+}
+
+export interface PuzzleGridData {
+  cells: PuzzleCell[][];
+  rows: number;
+  cols: number;
+}
+
+export interface Puzzle {
+  _id: string;
+  slug: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  gridData: PuzzleGridData;
+  clues: PuzzleClue[];
+  solution: string[][];
+  publishedAt: string;
+  tricksUsed?: string[];
+}

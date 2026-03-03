@@ -144,7 +144,7 @@ export async function getHint(req: AuthRequest, res: Response) {
       await progress.save();
     }
 
-    res.json({ hint: hint.content });
+    res.json({ content: hint.content });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch hint' });
   }

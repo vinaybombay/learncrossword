@@ -9,6 +9,7 @@ import authRoutes from './routes/auth';
 import crosswordRoutes from './routes/crosswords';
 import userRoutes from './routes/users';
 import leaderboardRoutes from './routes/leaderboard';
+import puzzleRoutes from './routes/puzzles';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -39,6 +40,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/crosswords', crosswordRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/puzzles', puzzleRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

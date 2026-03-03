@@ -8,11 +8,19 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "jest",
-    "seed": "ts-node src/seeds/run.ts"
+    "seed": "ts-node src/seeds/run.ts",
+    "seed:words": "ts-node src/seeds/seedWords.ts",
+    "seed:clear": "ts-node src/seeds/clearPuzzles.ts",
+    "generate:puzzles": "ts-node src/seeds/generatePuzzles.ts",
+    "generate:all": "npm run seed:words && npm run seed:clear && npm run generate:puzzles",
+    "generate:beginner": "ts-node src/seeds/generatePuzzles.ts --only=beginner",
+    "generate:intermediate": "ts-node src/seeds/generatePuzzles.ts --only=intermediate"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "crossword-layout-generator": "^0.1.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-validator": "^7.0.0",

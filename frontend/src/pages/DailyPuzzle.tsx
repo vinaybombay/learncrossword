@@ -6,6 +6,7 @@ import { puzzleService } from '../services/puzzleService';
 import { Puzzle, PuzzleClue, ClueType, SubmitResult } from '../types';
 import { useAuthStore } from '../store/authStore';
 import PuzzleGrid from '../components/PuzzleGrid';
+import HintPanel from '../components/HintPanel';
 
 // ── Clue type metadata ────────────────────────────────────────────────────────
 const CLUE_TYPE_META: Record<ClueType, { label: string; color: string; bg: string }> = {
@@ -116,6 +117,9 @@ const DailyPuzzle: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  // Hint state — tracks highest revealed level per clue key ("number-direction")
+  const [hintsUsed, setHintsUsed] = useState<Record<string, 0 | 1 | 2 | 3>>({});
 
   // Debounce timer ref for auto-save
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -232,6 +236,14 @@ const DailyPuzzle: React.FC = () => {
     setSelectedClue({ number, direction });
   };
 
+  // ── Hint handler ─────────────────────────────────────────────────────────────
+  const handleHintUsed = (clueKey: string, level: 1 | 2 | 3) => {
+    setHintsUsed((prev) => {
+      const current = (prev[clueKey] ?? 0) as 0 | 1 | 2 | 3;
+      return level > current ? { ...prev, [clueKey]: level } : prev;
+    });
+  };
+
   // ── Check / Submit answers ───────────────────────────────────────────────────
   const handleCheckAnswers = () => {
     if (!puzzle) return;
@@ -254,6 +266,7 @@ const DailyPuzzle: React.FC = () => {
     setShowModal(false);
     setSubmitResult(null);
     setShowLoginPrompt(false);
+    setHintsUsed({});
   };
 
   // ── Derived ──────────────────────────────────────────────────────────────────
@@ -269,6 +282,13 @@ const DailyPuzzle: React.FC = () => {
     : [];
 
   const diffConfig = DIFFICULTY_CONFIG[difficulty];
+
+  // ── Hint derived values ───────────────────────────────────────────────────────
+  const activeClueKey = activeClue
+    ? `${activeClue.number}-${activeClue.direction}`
+    : null;
+  const activeRevealedLevel: 0 | 1 | 2 | 3 =
+    (activeClueKey ? (hintsUsed[activeClueKey] ?? 0) : 0) as 0 | 1 | 2 | 3;
 
   // ── Score message ─────────────────────────────────────────────────────────────
   const scoreMessage = (score: number) => {
@@ -362,6 +382,16 @@ const DailyPuzzle: React.FC = () => {
               <span className="text-slate-400 text-sm">Click a cell or clue to begin solving</span>
             )}
           </div>
+
+          {/* HintPanel — shown when a clue is selected */}
+          {activeClue && (
+            <HintPanel
+              key={activeClueKey!}
+              clue={activeClue}
+              revealedLevel={activeRevealedLevel}
+              onHintUsed={handleHintUsed}
+            />
+          )}
 
           {/* Grid + Clues */}
           <div className="flex gap-6 items-start flex-wrap lg:flex-nowrap">

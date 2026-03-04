@@ -33,6 +33,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <Link to="/leaderboard" className="text-slate-600 hover:text-slate-900 font-medium transition">
                 Leaderboard
               </Link>
+              <Link to="/learn" className="text-slate-600 hover:text-slate-900 font-medium transition">
+                Learn
+              </Link>
               <Link
                 to="/upload"
                 className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium transition"
@@ -97,6 +100,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <ul className="text-sm space-y-2">
                 <li><Link to="/crosswords" className="hover:text-white transition">Daily Puzzle</Link></li>
                 <li><Link to="/leaderboard" className="hover:text-white transition">Leaderboard</Link></li>
+                <li><Link to="/learn" className="hover:text-white transition">Learn</Link></li>
               </ul>
             </div>
             <div>

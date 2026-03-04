@@ -9,6 +9,7 @@ import DailyPuzzle from './pages/DailyPuzzle';
 import Dashboard from './pages/Dashboard';
 import Leaderboard from './pages/Leaderboard';
 import UploadCrossword from './pages/UploadCrossword';
+import Learn from './pages/Learn';
 import { useAuthStore } from './store/authStore';
 import './index.css';
 
@@ -39,6 +40,7 @@ function App() {
             />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/upload" element={<UploadCrossword />} />
+            <Route path="/learn" element={<Learn />} />
           </Routes>
         </Layout>
       </Router>

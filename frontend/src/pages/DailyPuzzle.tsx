@@ -7,6 +7,8 @@ import { Puzzle, PuzzleClue, ClueType, SubmitResult } from '../types';
 import { useAuthStore } from '../store/authStore';
 import PuzzleGrid from '../components/PuzzleGrid';
 import HintPanel from '../components/HintPanel';
+import { SEO } from '../components/SEO';
+import { trackEvent } from '../utils/analytics';
 
 // ── Clue type metadata ────────────────────────────────────────────────────────
 const CLUE_TYPE_META: Record<ClueType, { label: string; color: string; bg: string }> = {
@@ -191,6 +193,16 @@ const DailyPuzzle: React.FC = () => {
       setSubmitted(true);
       setShowModal(true);
 
+      // Track analytics event
+      trackEvent('puzzle_submitted', {
+        difficulty,
+        score: result.score,
+        pointsEarned: result.pointsEarned,
+        correct: result.correct,
+        total: result.total,
+        alreadySubmitted: result.alreadySubmitted,
+      });
+
       // Update auth store with new user stats
       if (result.user && user) {
         setUser({
@@ -258,6 +270,7 @@ const DailyPuzzle: React.FC = () => {
 
   // ── Reset on difficulty change ───────────────────────────────────────────────
   const handleDifficultyChange = (d: Difficulty) => {
+    if (d !== difficulty) trackEvent('difficulty_changed', { from: difficulty, to: d });
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     setDifficulty(d);
     setAnswers({});
@@ -303,6 +316,11 @@ const DailyPuzzle: React.FC = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-7xl mx-auto">
+      <SEO
+        title="Daily Puzzle"
+        path="/crosswords"
+        description="Solve today's cryptic crossword. Beginner, intermediate, and advanced difficulties with 3-level progressive hints."
+      />
       {/* Header row */}
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>

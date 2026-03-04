@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { leaderboardService } from '../services/leaderboardService';
 import { motion } from 'framer-motion';
+import { SEO } from '../components/SEO';
 
 const Leaderboard: React.FC = () => {
   const { data, isLoading } = useQuery({
@@ -13,6 +14,11 @@ const Leaderboard: React.FC = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+      <SEO
+        title="Leaderboard"
+        path="/leaderboard"
+        description="Top cryptic crossword solvers ranked by points, level, and streaks on Learn Crosswords."
+      />
       <div>
         <h1 className="text-4xl font-bold text-slate-900 mb-2">Global Leaderboard</h1>
         <p className="text-slate-600">See who's leading the charge</p>

@@ -359,7 +359,7 @@ function templateFallback(answer: string, clueType: ClueType): string {
 
 // ── Main puzzle generator ──────────────────────────────────────────────────────
 
-async function generatePuzzle(difficulty: Difficulty) {
+export async function generatePuzzle(difficulty: Difficulty) {
   console.log(`\n🎯  Generating ${difficulty.toUpperCase()} puzzle...`);
 
   // 1. Select words
@@ -543,7 +543,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

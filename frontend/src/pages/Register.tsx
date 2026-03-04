@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
 import { motion } from 'framer-motion';
+import { trackEvent, identifyUser } from '../utils/analytics';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -37,6 +38,8 @@ const Register: React.FC = () => {
       );
       setToken(response.token);
       setUser(response.user);
+      trackEvent('user_registered');
+      identifyUser(response.user.id, { username: response.user.username, level: response.user.level });
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');

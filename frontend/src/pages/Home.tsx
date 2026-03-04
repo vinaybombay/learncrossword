@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
+import { SEO } from '../components/SEO';
 
 const Home: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
@@ -17,6 +18,10 @@ const Home: React.FC = () => {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-16">
+      <SEO
+        path="/"
+        description="Learn cryptic crosswords with daily puzzles, progressive hints, and interactive clue-type walkthroughs. Free to play."
+      />
 
       {/* ── Hero ── */}
       <motion.section variants={itemVariants} className="text-center py-20">

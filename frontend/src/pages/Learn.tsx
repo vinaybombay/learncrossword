@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ClueType } from '../types';
 import { CLUE_TYPE_META } from '../utils/hintUtils';
+import { SEO } from '../components/SEO';
+import { trackEvent } from '../utils/analytics';
 
 // ── Tab order: beginner-friendly → most niche ─────────────────────────────────
 const TAB_ORDER: ClueType[] = ['ANAG', 'HID', 'CHAR', 'SND', 'ACRO', 'HIDR', 'ALT', 'LAST'];
@@ -131,12 +133,18 @@ const Learn: React.FC = () => {
   const handleTabChange = (type: ClueType) => {
     setActiveTab(type);
     setStep(0);
+    trackEvent('learn_tab_viewed', { clueType: type });
   };
 
   const isNoIndicator = example.step1.indicatorPhrase === '(no indicator)';
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl mx-auto">
+      <SEO
+        title="Learn Cryptic Clue Types"
+        path="/learn"
+        description="Interactive guided walkthroughs for all 8 cryptic crossword clue types: anagram, hidden, charade, sounds-like, and more."
+      />
       {/* ── Page header ─────────────────────────────────────────────────────── */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Learn Cryptic Clue Types</h1>
@@ -285,7 +293,11 @@ const Learn: React.FC = () => {
         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
           {step < 3 ? (
             <button
-              onClick={() => setStep((s) => (s + 1) as 0 | 1 | 2 | 3)}
+              onClick={() => {
+                const nextStep = (step + 1) as 0 | 1 | 2 | 3;
+                setStep(nextStep);
+                trackEvent('learn_step_advanced', { clueType: activeTab, step: nextStep });
+              }}
               className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition"
             >
               {step === 0 ? 'Show structure' : step === 1 ? 'Show workings' : 'Reveal answer'}

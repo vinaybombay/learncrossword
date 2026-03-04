@@ -1,18 +1,28 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { resetAnalyticsUser } from '../utils/analytics';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    resetAnalyticsUser();
     logout();
     navigate('/');
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Skip to content — visible on keyboard focus for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-lg focus:shadow-lg focus:font-semibold"
+      >
+        Skip to content
+      </a>
+
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -83,7 +93,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="main-content" aria-label="Main content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
 

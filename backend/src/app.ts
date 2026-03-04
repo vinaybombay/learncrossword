@@ -1,8 +1,37 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
+import * as Sentry from '@sentry/node';
 
 dotenv.config();
+
+// ── Sentry (error tracking) — no-op when SENTRY_DSN is absent ─────────────────
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  enabled: !!process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV ?? 'development',
+  tracesSampleRate: 0.1,
+});
+
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+/** General API: 100 req / 15 min per IP */
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+/** Auth endpoints: 10 req / 15 min per IP (brute-force protection) */
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts, please try again later.' },
+});
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -34,6 +63,10 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'OK', timestamp: new Date() });
 });
 
+// Apply rate limiters before routes
+app.use('/api/', generalLimiter);
+app.use('/api/auth/', authLimiter);
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -47,5 +80,8 @@ app.use(errorHandler);
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found' });
 });
+
+// Sentry error handler — must be AFTER all routes and other error handlers
+Sentry.setupExpressErrorHandler(app);
 
 export default app;

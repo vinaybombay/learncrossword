@@ -32,6 +32,8 @@ const HintPanel: React.FC<HintPanelProps> = ({ clue, revealedLevel, onHintUsed }
       {/* ── Trigger bar ─────────────────────────────────────────────────────── */}
       <button
         onClick={() => setIsOpen((o) => !o)}
+        aria-expanded={isOpen}
+        aria-controls="hint-panel-body"
         className="w-full flex items-center justify-between px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition cursor-pointer"
       >
         <div className="flex items-center gap-2">
@@ -56,12 +58,14 @@ const HintPanel: React.FC<HintPanelProps> = ({ clue, revealedLevel, onHintUsed }
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
+            id="hint-panel-body"
             key="hint-body"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
+            aria-live="polite"
           >
             <div className="bg-amber-50 border border-amber-200 border-t-0 rounded-b-lg px-4 pb-4 pt-3 space-y-2">
               {/* ── Level 1 ─────────────────────────────────────────────────── */}

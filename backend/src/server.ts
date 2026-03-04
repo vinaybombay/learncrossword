@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import app from './app';
+import { startPuzzleScheduler } from './cron/puzzleScheduler';
 
 dotenv.config();
 
@@ -19,6 +20,9 @@ async function connectDatabase() {
 async function startServer() {
   try {
     await connectDatabase();
+    if (process.env.NODE_ENV !== 'test') {
+      startPuzzleScheduler();
+    }
     app.listen(PORT, () => {
       console.log(`✓ Server running on port ${PORT}`);
     });

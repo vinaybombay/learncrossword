@@ -62,7 +62,33 @@ export interface Puzzle {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   gridData: PuzzleGridData;
   clues: PuzzleClue[];
-  solution: string[][];
+  solution?: string[][];   // stripped from API response; only present server-side
   publishedAt: string;
   tricksUsed?: string[];
+}
+
+// ── Progress & submission ─────────────────────────────────────────────────────
+
+/** Returned by POST /api/puzzles/:slug/submit */
+export interface SubmitResult {
+  alreadySubmitted: boolean;
+  correct: number;
+  total: number;
+  score: number;           // 0–100 percentage
+  pointsEarned: number;
+  difficulty: string;
+  /** Updated user stats (only on first submission) */
+  user?: {
+    totalPoints: number;
+    level: number;
+    currentStreak: number;
+  };
+}
+
+/** Returned by GET /api/puzzles/:slug/progress */
+export interface PuzzleProgress {
+  answers: Record<string, string>;
+  completed: boolean;
+  pointsEarned: number;
+  score: number;
 }

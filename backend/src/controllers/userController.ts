@@ -12,7 +12,7 @@ export async function getUserProgress(req: AuthRequest, res: Response) {
     }
 
     const progress = await UserProgress.find({ userId: id })
-      .populate('crosswordId', 'title difficulty')
+      .populate('puzzleId', 'slug difficulty')
       .sort({ updatedAt: -1 });
 
     res.json(progress);

@@ -2,8 +2,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUserProgress extends Document {
   userId: mongoose.Types.ObjectId;
-  crosswordId: mongoose.Types.ObjectId;
-  answers: Map<string, string>; // clueNumber (as string) -> answer
+  puzzleId: mongoose.Types.ObjectId;
+  answers: Map<string, string>; // "row,col" -> letter (e.g. "0,3" -> "C")
+  score: number;                // 0–100 percentage of correct cells
   hintsUsed: number;
   pointsEarned: number;
   completed: boolean;
@@ -19,15 +20,21 @@ const userProgressSchema = new Schema<IUserProgress>(
       ref: 'User',
       required: true,
     },
-    crosswordId: {
+    puzzleId: {
       type: Schema.Types.ObjectId,
-      ref: 'Crossword',
+      ref: 'Puzzle',
       required: true,
     },
     answers: {
       type: Map,
       of: String,
       default: new Map(),
+    },
+    score: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
     hintsUsed: {
       type: Number,
@@ -46,6 +53,6 @@ const userProgressSchema = new Schema<IUserProgress>(
   { timestamps: true }
 );
 
-userProgressSchema.index({ userId: 1, crosswordId: 1 }, { unique: true });
+userProgressSchema.index({ userId: 1, puzzleId: 1 }, { unique: true });
 
 export default mongoose.model<IUserProgress>('UserProgress', userProgressSchema);

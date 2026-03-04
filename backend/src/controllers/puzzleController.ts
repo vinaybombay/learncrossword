@@ -3,7 +3,7 @@ import { Puzzle } from '../models/Puzzle';
 
 /**
  * GET /api/puzzles/daily
- * Returns today's published puzzle(s).
+ * Returns today's published puzzle(s) — solution is NOT included (server-side only).
  * Optional query: ?difficulty=beginner|intermediate|advanced
  */
 export const getDailyPuzzle = async (req: Request, res: Response) => {
@@ -22,7 +22,10 @@ export const getDailyPuzzle = async (req: Request, res: Response) => {
       query.difficulty = req.query.difficulty;
     }
 
-    const puzzles = await Puzzle.find(query).sort({ difficulty: 1 });
+    // Exclude solution from client response
+    const puzzles = await Puzzle.find(query)
+      .select('-solution')
+      .sort({ difficulty: 1 });
 
     if (!puzzles.length) {
       return res.status(404).json({ error: 'No puzzle published for today' });
@@ -63,12 +66,12 @@ export const getPuzzleArchive = async (_req: Request, res: Response) => {
 
 /**
  * GET /api/puzzles/:slug
- * Returns a full puzzle by slug.
+ * Returns a full puzzle by slug — solution is NOT included (server-side only).
  */
 export const getPuzzleBySlug = async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
-    const puzzle = await Puzzle.findOne({ slug });
+    const puzzle = await Puzzle.findOne({ slug }).select('-solution');
 
     if (!puzzle) {
       return res.status(404).json({ error: `Puzzle not found: ${slug}` });

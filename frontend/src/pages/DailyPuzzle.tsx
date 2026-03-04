@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { puzzleService } from '../services/puzzleService';
-import { Puzzle, PuzzleClue, ClueType } from '../types';
+import { Puzzle, PuzzleClue, ClueType, SubmitResult } from '../types';
+import { useAuthStore } from '../store/authStore';
 import PuzzleGrid from '../components/PuzzleGrid';
 
 // ── Clue type metadata ────────────────────────────────────────────────────────
@@ -26,32 +28,26 @@ const DIFFICULTY_CONFIG: Record<Difficulty, { label: string; color: string; ring
   advanced:     { label: 'Advanced',     color: 'bg-red-100 text-red-700',         ring: 'ring-red-400'     },
 };
 
-// ── Helper: check answers against solution ───────────────────────────────────
-function checkAnswers(
-  puzzle: Puzzle,
-  answers: Record<string, string>
-): { correct: number; total: number; correctCells: Set<string>; wrongCells: Set<string> } {
-  const { rows, cols, cells } = puzzle.gridData;
-  let correct = 0, total = 0;
-  const correctCells = new Set<string>();
-  const wrongCells = new Set<string>();
+// ── localStorage helpers ──────────────────────────────────────────────────────
+function lsKey(slug: string) {
+  return `puzzle-progress-${slug}`;
+}
 
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (!cells[r]?.[c]?.isBlack) {
-        total++;
-        const entered = (answers[`${r},${c}`] ?? '').trim().toUpperCase();
-        const sol = (puzzle.solution?.[r]?.[c] ?? '').toUpperCase();
-        if (entered === sol && entered !== '') {
-          correct++;
-          correctCells.add(`${r},${c}`);
-        } else if (entered !== '') {
-          wrongCells.add(`${r},${c}`);
-        }
-      }
-    }
+function saveToLocalStorage(slug: string, answers: Record<string, string>) {
+  try {
+    localStorage.setItem(lsKey(slug), JSON.stringify(answers));
+  } catch {
+    // ignore storage errors
   }
-  return { correct, total, correctCells, wrongCells };
+}
+
+function loadFromLocalStorage(slug: string): Record<string, string> | null {
+  try {
+    const raw = localStorage.getItem(lsKey(slug));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Clue Item ─────────────────────────────────────────────────────────────────
@@ -63,7 +59,6 @@ const ClueItem: React.FC<{
 }> = ({ clue, isSelected, answers, onClick }) => {
   const meta = CLUE_TYPE_META[clue.clueType];
 
-  // Count filled cells for this clue
   const totalCells = clue.length;
   const filledCells = Array.from({ length: clue.length }, (_, i) => {
     const r = clue.direction === 'across' ? clue.startRow : clue.startRow + i;
@@ -111,53 +106,161 @@ const ClueItem: React.FC<{
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const DailyPuzzle: React.FC = () => {
+  const { user, setUser } = useAuthStore();
+  const isLoggedIn = !!user;
+
   const [difficulty, setDifficulty] = useState<Difficulty>('beginner');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [selectedClue, setSelectedClue] = useState<{ number: number; direction: 'across' | 'down' } | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [checkResult, setCheckResult] = useState<{ correct: number; total: number } | null>(null);
+  const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  // Reset state when difficulty changes
-  const handleDifficultyChange = (d: Difficulty) => {
-    setDifficulty(d);
-    setAnswers({});
-    setSelectedClue(null);
-    setSubmitted(false);
-    setShowModal(false);
-    setCheckResult(null);
-  };
+  // Debounce timer ref for auto-save
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track whether we've finished restoring progress
+  const progressRestored = useRef(false);
 
+  // ── Fetch puzzle ─────────────────────────────────────────────────────────────
   const { data: puzzle, isLoading, isError } = useQuery<Puzzle>({
     queryKey: ['dailyPuzzle', difficulty],
     queryFn: () => puzzleService.getDailyPuzzle(difficulty),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  const handleCellChange = (row: number, col: number, char: string) => {
-    setAnswers((prev) => ({ ...prev, [`${row},${col}`]: char }));
-  };
+  // ── Restore progress on puzzle load ─────────────────────────────────────────
+  useEffect(() => {
+    if (!puzzle) return;
+    progressRestored.current = false;
+
+    const restore = async () => {
+      if (isLoggedIn) {
+        // Logged-in: try server first, fall back to localStorage
+        try {
+          const serverProgress = await puzzleService.getPuzzleProgress(puzzle.slug);
+          if (serverProgress) {
+            setAnswers(serverProgress.answers);
+            if (serverProgress.completed) {
+              setSubmitted(true);
+              // Reconstruct a minimal SubmitResult for the "already submitted" state
+              setSubmitResult({
+                alreadySubmitted: true,
+                correct: Math.round((serverProgress.score / 100) * Object.keys(serverProgress.answers).length),
+                total: Object.keys(serverProgress.answers).length,
+                score: serverProgress.score,
+                pointsEarned: serverProgress.pointsEarned,
+                difficulty: puzzle.difficulty,
+              });
+            }
+            progressRestored.current = true;
+            return;
+          }
+        } catch {
+          // Server unavailable — fall through to localStorage
+        }
+      }
+
+      // Guest or server miss: restore from localStorage
+      const local = loadFromLocalStorage(puzzle.slug);
+      if (local) {
+        setAnswers(local);
+      }
+      progressRestored.current = true;
+    };
+
+    restore();
+  }, [puzzle?.slug, isLoggedIn]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Auto-save mutation (logged-in users) ─────────────────────────────────────
+  const { mutate: autoSave } = useMutation({
+    mutationFn: ({ slug, ans }: { slug: string; ans: Record<string, string> }) =>
+      puzzleService.savePuzzleProgress(slug, ans),
+  });
+
+  // ── Submit mutation ──────────────────────────────────────────────────────────
+  const { mutate: submitMutation, isPending: isSubmitting } = useMutation({
+    mutationFn: ({ slug, ans }: { slug: string; ans: Record<string, string> }) =>
+      puzzleService.submitPuzzle(slug, ans),
+    onSuccess: (result) => {
+      setSubmitResult(result);
+      setSubmitted(true);
+      setShowModal(true);
+
+      // Update auth store with new user stats
+      if (result.user && user) {
+        setUser({
+          ...user,
+          totalPoints: result.user.totalPoints,
+          level: result.user.level,
+          currentStreak: result.user.currentStreak,
+        });
+      }
+    },
+    onError: () => {
+      // Show error toast (simple alert fallback)
+      alert('Could not submit — please check your connection and try again.');
+    },
+  });
+
+  // ── Handle cell change + debounced save ──────────────────────────────────────
+  const handleCellChange = useCallback(
+    (row: number, col: number, char: string) => {
+      setAnswers((prev) => {
+        const next = { ...prev, [`${row},${col}`]: char };
+
+        // Always save to localStorage
+        if (puzzle) {
+          saveToLocalStorage(puzzle.slug, next);
+        }
+
+        // Debounced server auto-save for logged-in users
+        if (isLoggedIn && puzzle && !submitted) {
+          if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+          autoSaveTimer.current = setTimeout(() => {
+            autoSave({ slug: puzzle.slug, ans: next });
+          }, 1000);
+        }
+
+        return next;
+      });
+    },
+    [puzzle, isLoggedIn, submitted, autoSave]
+  );
 
   const handleClueSelect = (number: number, direction: 'across' | 'down') => {
     setSelectedClue({ number, direction });
   };
 
+  // ── Check / Submit answers ───────────────────────────────────────────────────
   const handleCheckAnswers = () => {
     if (!puzzle) return;
-    const result = checkAnswers(puzzle, answers);
-    setCheckResult({ correct: result.correct, total: result.total });
-    setSubmitted(true);
-    setShowModal(true);
+
+    if (!isLoggedIn) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    submitMutation({ slug: puzzle.slug, ans: answers });
   };
 
-  // Active clue
+  // ── Reset on difficulty change ───────────────────────────────────────────────
+  const handleDifficultyChange = (d: Difficulty) => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    setDifficulty(d);
+    setAnswers({});
+    setSelectedClue(null);
+    setSubmitted(false);
+    setShowModal(false);
+    setSubmitResult(null);
+    setShowLoginPrompt(false);
+  };
+
+  // ── Derived ──────────────────────────────────────────────────────────────────
   const activeClue = selectedClue && puzzle
-    ? puzzle.clues.find(
-        (cl) => cl.number === selectedClue.number && cl.direction === selectedClue.direction
-      )
+    ? puzzle.clues.find((cl) => cl.number === selectedClue.number && cl.direction === selectedClue.direction)
     : null;
 
-  // Split clues
   const acrossClues = puzzle
     ? [...puzzle.clues.filter((c) => c.direction === 'across')].sort((a, b) => a.number - b.number)
     : [];
@@ -166,6 +269,17 @@ const DailyPuzzle: React.FC = () => {
     : [];
 
   const diffConfig = DIFFICULTY_CONFIG[difficulty];
+
+  // ── Score message ─────────────────────────────────────────────────────────────
+  const scoreMessage = (score: number) => {
+    if (score === 100) return 'Perfect solve! Brilliant! 🎉';
+    if (score >= 80)  return 'Almost there — great effort! 👏';
+    if (score >= 50)  return 'Good progress, keep going! 💪';
+    return 'Cryptic crosswords are tough — keep practising! 🧩';
+  };
+
+  const scoreEmoji = (score: number) =>
+    score === 100 ? '🎉' : score >= 80 ? '👏' : '💪';
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-7xl mx-auto">
@@ -195,13 +309,13 @@ const DailyPuzzle: React.FC = () => {
           ))}
         </div>
 
-        {/* Check Answers button */}
+        {/* Check / Submit button */}
         <button
           onClick={handleCheckAnswers}
-          disabled={!puzzle || submitted}
+          disabled={!puzzle || submitted || isSubmitting}
           className="px-6 py-2 bg-slate-800 text-white rounded-lg font-semibold hover:bg-slate-700 transition disabled:opacity-40 text-sm"
         >
-          {submitted ? '✓ Checked' : 'Check Answers'}
+          {isSubmitting ? 'Checking…' : submitted ? '✓ Submitted' : 'Check Answers'}
         </button>
       </div>
 
@@ -262,10 +376,17 @@ const DailyPuzzle: React.FC = () => {
                 submitted={submitted}
               />
 
-              {/* Grid meta */}
-              <p className="text-xs text-slate-400 mt-2">
-                {puzzle.gridData.rows}×{puzzle.gridData.cols} grid · {puzzle.clues.length} clues
-              </p>
+              {/* Grid meta + progress save indicator */}
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-slate-400">
+                  {puzzle.gridData.rows}×{puzzle.gridData.cols} grid · {puzzle.clues.length} clues
+                </p>
+                {!isLoggedIn && (
+                  <p className="text-xs text-amber-600">
+                    💾 Progress saved locally
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Clues panel */}
@@ -297,10 +418,7 @@ const DailyPuzzle: React.FC = () => {
                       <ClueItem
                         key={`across-${clue.number}`}
                         clue={clue}
-                        isSelected={
-                          selectedClue?.number === clue.number &&
-                          selectedClue?.direction === 'across'
-                        }
+                        isSelected={selectedClue?.number === clue.number && selectedClue?.direction === 'across'}
                         answers={answers}
                         onClick={() => handleClueSelect(clue.number, 'across')}
                       />
@@ -323,10 +441,7 @@ const DailyPuzzle: React.FC = () => {
                       <ClueItem
                         key={`down-${clue.number}`}
                         clue={clue}
-                        isSelected={
-                          selectedClue?.number === clue.number &&
-                          selectedClue?.direction === 'down'
-                        }
+                        isSelected={selectedClue?.number === clue.number && selectedClue?.direction === 'down'}
                         answers={answers}
                         onClick={() => handleClueSelect(clue.number, 'down')}
                       />
@@ -342,36 +457,80 @@ const DailyPuzzle: React.FC = () => {
         </>
       )}
 
-      {/* Result Modal */}
-      {showModal && checkResult && puzzle && (
+      {/* ── Login Prompt Modal (guest trying to submit) ─────────────────────── */}
+      {showLoginPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center"
           >
-            <div className="text-5xl mb-4">
-              {checkResult.correct === checkResult.total
-                ? '🎉'
-                : checkResult.correct > checkResult.total / 2
-                ? '👏'
-                : '💪'}
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">
-              {checkResult.correct}/{checkResult.total} cells correct
-            </h2>
-            <p className="text-slate-500 text-sm mb-4">
-              {checkResult.correct === checkResult.total
-                ? 'Perfect solve! Brilliant!'
-                : checkResult.correct > checkResult.total * 0.8
-                ? 'Almost there — great effort!'
-                : checkResult.correct > checkResult.total / 2
-                ? 'Good progress, keep going!'
-                : 'Cryptic crosswords are tough — keep practising!'}
+            <div className="text-5xl mb-4">🔒</div>
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Sign in to check answers</h2>
+            <p className="text-slate-500 text-sm mb-6">
+              Create a free account to check your answers, track your progress, and build your solving streak.
+              Your current grid is saved!
             </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition"
+              >
+                Keep solving
+              </button>
+              <Link
+                to="/register"
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition text-center"
+              >
+                Sign up free
+              </Link>
+            </div>
+            <Link to="/login" className="block mt-3 text-sm text-slate-400 hover:text-slate-600 transition">
+              Already have an account? Log in
+            </Link>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ── Result Modal (logged-in submit) ────────────────────────────────────── */}
+      {showModal && submitResult && puzzle && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center"
+          >
+            <div className="text-5xl mb-4">{scoreEmoji(submitResult.score)}</div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-1">
+              {submitResult.score}% correct
+            </h2>
+            <p className="text-slate-500 text-sm mb-3">
+              {scoreMessage(submitResult.score)}
+            </p>
+
+            {/* Points earned */}
+            {submitResult.pointsEarned > 0 && !submitResult.alreadySubmitted && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 mb-3">
+                <p className="text-emerald-700 font-semibold text-sm">
+                  +{submitResult.pointsEarned} pts earned
+                </p>
+                {submitResult.user && (
+                  <p className="text-emerald-600 text-xs mt-0.5">
+                    Total: {submitResult.user.totalPoints} pts · Level {submitResult.user.level}
+                    {submitResult.user.currentStreak > 1 && ` · 🔥 ${submitResult.user.currentStreak} day streak`}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {submitResult.alreadySubmitted && (
+              <p className="text-slate-400 text-xs mb-3">Already submitted — no additional points awarded.</p>
+            )}
+
             <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${diffConfig.color}`}>
               {difficulty}
             </span>
+
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
@@ -383,11 +542,7 @@ const DailyPuzzle: React.FC = () => {
                 onClick={() => {
                   setShowModal(false);
                   handleDifficultyChange(
-                    difficulty === 'beginner'
-                      ? 'intermediate'
-                      : difficulty === 'intermediate'
-                      ? 'advanced'
-                      : 'beginner'
+                    difficulty === 'beginner' ? 'intermediate' : difficulty === 'intermediate' ? 'advanced' : 'beginner'
                   );
                 }}
                 className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition"

@@ -13,6 +13,7 @@ export interface IUser extends Document {
   longestStreak: number;
   level: number;
   completedCrosswords: mongoose.Types.ObjectId[];
+  lastSolvedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -59,9 +60,12 @@ const userSchema = new Schema<IUser>(
     completedCrosswords: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Crossword',
+        ref: 'Puzzle',
       },
     ],
+    lastSolvedAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
